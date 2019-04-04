@@ -55,12 +55,14 @@ describe("secret sniffing", () => {
     describe("tests file", () => {
 
         it("doesn't object to innocent JS file", async () => {
-            const exposedSecrets = await sniffFileContent(undefined, "evil.js", "const myString = 'kinder than the Dalai Lama'", { secretDefinitions: DefaultSecretDefinitions });
+            const exposedSecrets = await sniffFileContent(undefined, "evil.js", "const myString = 'kinder than the Dalai Lama'",
+                { secretDefinitions: DefaultSecretDefinitions });
             assert.strictEqual(exposedSecrets.length, 0);
         });
 
         it("finds leaky JS file", async () => {
-            const exposedSecrets = await sniffFileContent(undefined, "evil.js", "const awsLeak = 'AKIAIMW6ASF43DFX57X9'", { secretDefinitions: DefaultSecretDefinitions });
+            const exposedSecrets = await sniffFileContent(undefined, "evil.js",
+                "const awsLeak = 'AKIAIMW6ASF43DFX57X9'", { secretDefinitions: DefaultSecretDefinitions });
             assert.strictEqual(exposedSecrets.length, 1);
             assert.strictEqual(exposedSecrets[0].path, "evil.js");
             assert.strictEqual(exposedSecrets[0].secret, "AKIAIMW6ASF43DFX57X9");

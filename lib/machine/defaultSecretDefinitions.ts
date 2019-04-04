@@ -1,7 +1,7 @@
 import { SecretDefinition } from "./secretSniffing";
 
 /**
- * Note that all regexes must be global
+ * Based on regular expressions in https://www.ndss-symposium.org/wp-content/uploads/2019/02/ndss2019_04B-3_Meli_paper.pdf
  * @type {any[]}
  */
 export const DefaultSecretDefinitions: SecretDefinition[] = [

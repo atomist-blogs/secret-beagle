@@ -39,7 +39,7 @@ export function machine(
 ): SoftwareDeliveryMachine {
 
     const sdm = createSoftwareDeliveryMachine({
-        name: "Empty Seed Software Delivery Machine",
+        name: "Software Delivery Machine to find exposed secrets in any project",
         configuration,
     });
 

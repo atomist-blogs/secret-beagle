@@ -17,6 +17,22 @@ export interface ExposedSecret {
     // TODO add source location extraction
 }
 
+/**
+ * Definition of a secret we can find in a project
+ */
+export interface SecretDefinition {
+
+    /**
+     * Regexp for the secret
+     */
+    pattern: RegExp,
+
+    /**
+     * Description of the problem. For example, what kind of secret this is.
+     */
+    description: string;
+}
+
 export interface SnifferOptions {
 
     secretDefinitions: SecretDefinition[];
@@ -25,18 +41,14 @@ export interface SnifferOptions {
 /**
  * Sniff this project for exposed secrets.
  * Open every file.
- * @param {Project} project
- * @return {ExposedSecret[]}
  */
 export async function sniffProject(project: Project, opts: SnifferOptions): Promise<ExposedSecret[]> {
     return _.flatten(await projectUtils.gatherFromFiles(project, AllFiles, async f => {
+        if (await f.isBinary()) {
+            return undefined;
+        }
         return sniffFileContent(project.id, f.path, await f.getContent(), opts);
     }));
-}
-
-export interface SecretDefinition {
-    pattern: RegExp,
-    description: string;
 }
 
 export async function sniffFileContent(repoRef: RepoRef, path: string, content: string, opts: SnifferOptions): Promise<ExposedSecret[]> {
