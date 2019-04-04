@@ -17,7 +17,8 @@
 import {
     onAnyPush,
     PushImpact,
-    PushImpactListener, PushImpactResponse,
+    PushImpactListener,
+    PushImpactResponse,
     SdmContext,
     slackInfoMessage,
     slackWarningMessage,
@@ -25,9 +26,8 @@ import {
     SoftwareDeliveryMachineConfiguration,
 } from "@atomist/sdm";
 import { createSoftwareDeliveryMachine, } from "@atomist/sdm-core";
-import { AllFiles, Project, projectUtils, RepoRef } from "@atomist/automation-client";
-
-import * as _ from "lodash";
+import { ExposedSecret, sniffProject } from "./secretSniffing";
+import { DefaultSecretDefinitions } from "./defaultSecretDefinitions";
 
 /**
  * Initialize an sdm definition, and add functionality to it.
@@ -51,12 +51,14 @@ export function machine(
         onAnyPush().itMeans("sniff for secrets").setGoals(pushImpact),
     );
 
+    const secretDefinitions = DefaultSecretDefinitions;
+
     sdm.addCodeInspectionCommand({
         name: "secretSniffer",
         intent: ["find secrets", "sniff secrets", "release the hound"],
         inspection: async (p, ci) => {
             await ci.addressChannels(`Sniffing project at ${p.id.url} for secrets`);
-            const exposedSecrets = await sniffProject(p);
+            const exposedSecrets = await sniffProject(p, { secretDefinitions });
             if (exposedSecrets.length === 0) {
                 await ci.addressChannels(slackInfoMessage(p.id.url, "Everything is cool and secure :thumbsup:"));
             } else {
@@ -81,7 +83,7 @@ async function renderExposedSecrets(exposedSecrets: ExposedSecret[], sdmc: SdmCo
  */
 function sniffForSecrets(): PushImpactListener<{}> {
     return async pil => {
-        const exposedSecrets = await sniffProject(pil.project);
+        const exposedSecrets = await sniffProject(pil.project, { secretDefinitions: DefaultSecretDefinitions });
         await renderExposedSecrets(exposedSecrets, pil);
         return {
             response: exposedSecrets.length > 0 ?
@@ -89,60 +91,4 @@ function sniffForSecrets(): PushImpactListener<{}> {
                 PushImpactResponse.proceed
         };
     };
-}
-
-export interface ExposedSecret {
-
-    repoRef: RepoRef;
-
-    /**
-     * File path within project
-     */
-    path: string;
-
-    secret: string;
-
-    description: string;
-
-    // TODO add source location extraction
-}
-
-/**
- * Sniff this project for exposed secrets.
- * Open every file.
- * @param {Project} project
- * @return {ExposedSecret[]}
- */
-export async function sniffProject(project: Project): Promise<ExposedSecret[]> {
-    return _.flatten(await projectUtils.gatherFromFiles(project, AllFiles, async f => {
-        return sniffFileContent(project.id, f.path, await f.getContent());
-    }));
-}
-
-/**
- * Note that all regexes must be global
- * @type {any[]}
- */
-const SecretPatterns: Array<{ pattern: RegExp, description: string }> = [
-    {
-        pattern: /AKIA[0-9A-Z]{16}/g,
-        description: "AWS secret",
-    },
-];
-
-export async function sniffFileContent(repoRef: RepoRef, path: string, content: string): Promise<ExposedSecret[]> {
-    const exposedSecrets: ExposedSecret[] = [];
-    for (const pat of SecretPatterns) {
-        if (!pat.pattern.flags.includes("g")) {
-            throw new Error("All regexes must be global: Found " + pat.pattern.source);
-        }
-        const matches = content.match(pat.pattern) || [];
-        matches.forEach(m => exposedSecrets.push(({
-            repoRef,
-            path,
-            description: pat.description,
-            secret: m,
-        })));
-    }
-    return exposedSecrets;
 }
