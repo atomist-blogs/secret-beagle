@@ -1,0 +1,28 @@
+import { SnifferOptions } from "./secretSniffing";
+
+import * as yaml from "yamljs";
+
+import * as fs from "fs";
+import * as path from "path";
+
+/**
+ * Based on regular expressions in https://www.ndss-symposium.org/wp-content/uploads/2019/02/ndss2019_04B-3_Meli_paper.pdf
+ * @type {any[]}
+ */
+export async function loadSecretDefinitions(): Promise<SnifferOptions> {
+    const secretsYmlPath = path.join(__dirname, "..", "..", "secrets.yml");
+    const yamlString = fs.readFileSync(secretsYmlPath, 'utf8');
+    const native = await yaml.parse(yamlString);
+
+    const secretDefinitions = native.secrets
+        .map((s: any) => s.secret)
+        .map((s: any) => ({
+            pattern: new RegExp(s.pattern, "g"),
+            description: s.description,
+        }));
+
+    return {
+        secretDefinitions,
+        whitelist: native.whitelist,
+    };
+}

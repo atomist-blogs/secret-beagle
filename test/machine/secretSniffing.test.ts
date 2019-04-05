@@ -17,7 +17,7 @@
 import * as assert from "power-assert";
 import { InMemoryProject } from "@atomist/automation-client";
 import { sniffFileContent, sniffProject } from "../../lib/machine/secretSniffing";
-import { DefaultSecretDefinitions } from "../../lib/machine/defaultSecretDefinitions";
+import { loadSecretDefinitions } from "../../lib/machine/secretDefinitionLoader";
 
 describe("secret sniffing", () => {
 
@@ -25,7 +25,7 @@ describe("secret sniffing", () => {
 
         it("finds not secrets in empty project", async () => {
             const p = InMemoryProject.of();
-            const exposedSecrets = await sniffProject(p, { secretDefinitions: DefaultSecretDefinitions });
+            const exposedSecrets = await sniffProject(p, await loadSecretDefinitions());
             assert.strictEqual(exposedSecrets.length, 0);
         });
 
@@ -34,7 +34,7 @@ describe("secret sniffing", () => {
                 path: "evil.js",
                 content: "const myString = 'kinder than the Dalai Lama'",
             });
-            const exposedSecrets = await sniffProject(p, { secretDefinitions: DefaultSecretDefinitions });
+            const exposedSecrets = await sniffProject(p, await loadSecretDefinitions());
             assert.strictEqual(exposedSecrets.length, 0);
         });
 
@@ -43,7 +43,8 @@ describe("secret sniffing", () => {
                 path: "evil.js",
                 content: "const awsLeak = 'AKIAIMW6ASF43DFX57X9'",
             });
-            const exposedSecrets = await sniffProject(p, { secretDefinitions: DefaultSecretDefinitions });
+            const exposedSecrets = await sniffProject(p,
+                await loadSecretDefinitions());
             assert.strictEqual(exposedSecrets.length, 1);
             assert.strictEqual(exposedSecrets[0].path, "evil.js");
             assert.strictEqual(exposedSecrets[0].secret, "AKIAIMW6ASF43DFX57X9");
@@ -56,13 +57,14 @@ describe("secret sniffing", () => {
 
         it("doesn't object to innocent JS file", async () => {
             const exposedSecrets = await sniffFileContent(undefined, "evil.js", "const myString = 'kinder than the Dalai Lama'",
-                { secretDefinitions: DefaultSecretDefinitions });
+                await loadSecretDefinitions());
             assert.strictEqual(exposedSecrets.length, 0);
         });
 
         it("finds leaky JS file", async () => {
             const exposedSecrets = await sniffFileContent(undefined, "evil.js",
-                "const awsLeak = 'AKIAIMW6ASF43DFX57X9'", { secretDefinitions: DefaultSecretDefinitions });
+                "const awsLeak = 'AKIAIMW6ASF43DFX57X9'",
+                await loadSecretDefinitions());
             assert.strictEqual(exposedSecrets.length, 1);
             assert.strictEqual(exposedSecrets[0].path, "evil.js");
             assert.strictEqual(exposedSecrets[0].secret, "AKIAIMW6ASF43DFX57X9");

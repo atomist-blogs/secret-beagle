@@ -26,32 +26,32 @@ import {
     SoftwareDeliveryMachineConfiguration,
 } from "@atomist/sdm";
 import { createSoftwareDeliveryMachine, } from "@atomist/sdm-core";
-import { ExposedSecret, sniffProject } from "./secretSniffing";
-import { DefaultSecretDefinitions } from "./defaultSecretDefinitions";
+import { ExposedSecret, SecretDefinition, sniffProject } from "./secretSniffing";
+import { loadSecretDefinitions } from "./secretDefinitionLoader";
 
 /**
  * Initialize an sdm definition, and add functionality to it.
  *
  * @param configuration All the configuration for this service
  */
-export function machine(
+export async function machine(
     configuration: SoftwareDeliveryMachineConfiguration,
-): SoftwareDeliveryMachine {
+): Promise<SoftwareDeliveryMachine> {
 
     const sdm = createSoftwareDeliveryMachine({
         name: "Software Delivery Machine to find exposed secrets in any project",
         configuration,
     });
 
+    const secretDefinitions = await loadSecretDefinitions();
+
     // Goal to react to any push
     const pushImpact = new PushImpact()
-        .withListener(sniffForSecrets());
+        .withListener(sniffForSecrets(secretDefinitions));
 
     sdm.withPushRules(
         onAnyPush().itMeans("sniff for secrets").setGoals(pushImpact),
     );
-
-    const secretDefinitions = DefaultSecretDefinitions;
 
     sdm.addCodeInspectionCommand({
         name: "secretSniffer",
@@ -81,9 +81,9 @@ async function renderExposedSecrets(exposedSecrets: ExposedSecret[], sdmc: SdmCo
  * On every push, scan for secrets
  * @return {PushImpactListener<{}>}
  */
-function sniffForSecrets(): PushImpactListener<{}> {
+function sniffForSecrets(secretDefinitions: SecretDefinition[]): PushImpactListener<{}> {
     return async pil => {
-        const exposedSecrets = await sniffProject(pil.project, { secretDefinitions: DefaultSecretDefinitions });
+        const exposedSecrets = await sniffProject(pil.project, { secretDefinitions });
         await renderExposedSecrets(exposedSecrets, pil);
         return {
             response: exposedSecrets.length > 0 ?

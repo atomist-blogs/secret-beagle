@@ -24,8 +24,9 @@
   "types": "./index.d.ts",
   "dependencies": {
     "@atomist/automation-client": "1.3.1-master.20190326043055",
-    "@atomist/sdm": "1.3.1-master.20190326042612",
-    "@atomist/sdm-core": "1.3.1-master.20190323165808"
+    "@atomist/sdm": "^1.4.2-master.20190404124146",
+    "@atomist/sdm-core": "1.3.1-master.20190323165808",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "@atomist/sdm-local": "1.0.6-master.20190327194706",

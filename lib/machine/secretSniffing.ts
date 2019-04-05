@@ -36,6 +36,11 @@ export interface SecretDefinition {
 export interface SnifferOptions {
 
     secretDefinitions: SecretDefinition[];
+
+    /**
+     * Whitelisted secrets
+     */
+    whitelist: string[];
 }
 
 /**
