@@ -35,6 +35,8 @@ export interface SecretDefinition {
 
 export interface SnifferOptions {
 
+    globs: string[];
+
     secretDefinitions: SecretDefinition[];
 
     /**
@@ -48,7 +50,7 @@ export interface SnifferOptions {
  * Open every file.
  */
 export async function sniffProject(project: Project, opts: SnifferOptions): Promise<ExposedSecret[]> {
-    return _.flatten(await projectUtils.gatherFromFiles(project, AllFiles, async f => {
+    return _.flatten(await projectUtils.gatherFromFiles(project, opts.globs, async f => {
         if (await f.isBinary()) {
             return undefined;
         }
@@ -59,9 +61,6 @@ export async function sniffProject(project: Project, opts: SnifferOptions): Prom
 export async function sniffFileContent(repoRef: RepoRef, path: string, content: string, opts: SnifferOptions): Promise<ExposedSecret[]> {
     const exposedSecrets: ExposedSecret[] = [];
     for (const pat of opts.secretDefinitions) {
-        if (!pat.pattern.flags.includes("g")) {
-            throw new Error("All regexes must be global: Found " + pat.pattern.source);
-        }
         const matches = content.match(pat.pattern) || [];
         matches.forEach(m => exposedSecrets.push(({
             repoRef,

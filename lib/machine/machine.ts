@@ -26,8 +26,8 @@ import {
     SoftwareDeliveryMachineConfiguration,
 } from "@atomist/sdm";
 import { createSoftwareDeliveryMachine, } from "@atomist/sdm-core";
-import { ExposedSecret, SecretDefinition, sniffProject } from "./secretSniffing";
-import { loadSecretDefinitions } from "./secretDefinitionLoader";
+import { ExposedSecret, SecretDefinition, SnifferOptions, sniffProject } from "./secretSniffing";
+import { loadSnifferOptions } from "./snifferOptionsLoader";
 
 /**
  * Initialize an sdm definition, and add functionality to it.
@@ -43,11 +43,11 @@ export async function machine(
         configuration,
     });
 
-    const secretDefinitions = await loadSecretDefinitions();
+    const snifferOptions = await loadSnifferOptions();
 
     // Goal to react to any push
     const pushImpact = new PushImpact()
-        .withListener(sniffForSecrets(secretDefinitions));
+        .withListener(sniffForSecrets(snifferOptions));
 
     sdm.withPushRules(
         onAnyPush().itMeans("sniff for secrets").setGoals(pushImpact),
@@ -58,7 +58,7 @@ export async function machine(
         intent: ["find secrets", "sniff secrets", "release the hound"],
         inspection: async (p, ci) => {
             await ci.addressChannels(`Sniffing project at ${p.id.url} for secrets`);
-            const exposedSecrets = await sniffProject(p, { secretDefinitions });
+            const exposedSecrets = await sniffProject(p, snifferOptions);
             if (exposedSecrets.length === 0) {
                 await ci.addressChannels(slackInfoMessage(p.id.url, "Everything is cool and secure :thumbsup:"));
             } else {
@@ -81,9 +81,9 @@ async function renderExposedSecrets(exposedSecrets: ExposedSecret[], sdmc: SdmCo
  * On every push, scan for secrets
  * @return {PushImpactListener<{}>}
  */
-function sniffForSecrets(secretDefinitions: SecretDefinition[]): PushImpactListener<{}> {
+function sniffForSecrets(opts: SnifferOptions): PushImpactListener<{}> {
     return async pil => {
-        const exposedSecrets = await sniffProject(pil.project, { secretDefinitions });
+        const exposedSecrets = await sniffProject(pil.project, opts);
         await renderExposedSecrets(exposedSecrets, pil);
         return {
             response: exposedSecrets.length > 0 ?
