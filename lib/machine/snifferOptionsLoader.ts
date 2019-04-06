@@ -13,18 +13,22 @@ import { AllFiles } from "@atomist/automation-client";
 export async function loadSnifferOptions(): Promise<SnifferOptions> {
     const secretsYmlPath = path.join(__dirname, "..", "..", "secrets.yml");
     const yamlString = fs.readFileSync(secretsYmlPath, 'utf8');
-    const native = await yaml.parse(yamlString);
+    try {
+        const native = await yaml.parse(yamlString);
 
-    const secretDefinitions: SecretDefinition[] = native.secrets
-        .map((s: any) => s.secret)
-        .map((s: any) => ({
-            pattern: new RegExp(s.pattern, "g"),
-            description: s.description,
-        }));
+        const secretDefinitions: SecretDefinition[] = native.secrets
+            .map((s: any) => s.secret)
+            .map((s: any) => ({
+                pattern: new RegExp(s.pattern, "g"),
+                description: s.description,
+            }));
 
-    return {
-        secretDefinitions,
-        whitelist: native.whitelist || [],
-        globs: native.globs || [AllFiles],
-    };
+        return {
+            secretDefinitions,
+            whitelist: native.whitelist || [],
+            globs: native.globs || [AllFiles],
+        };
+    } catch (err) {
+        throw new Error(`Unable to parse secrets.yml: ${err.message}`);
+    }
 }
