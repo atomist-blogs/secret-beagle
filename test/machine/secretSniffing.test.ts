@@ -68,7 +68,15 @@ describe("secret sniffing", () => {
             assert.strictEqual(exposedSecrets.length, 1);
             assert.strictEqual(exposedSecrets[0].path, "evil.js");
             assert.strictEqual(exposedSecrets[0].secret, "AKIAIMW6ASF43DFX57X9");
+        });
 
+        it("respects whitelist", async () => {
+            const opts = await loadSnifferOptions();
+            opts.whitelist = ["AKIAIMW6ASF43DFX57X9"];
+            const exposedSecrets = await sniffFileContent(undefined, "evil.js",
+                "const awsLeak = 'AKIAIMW6ASF43DFX57X9'",
+                opts);
+            assert.strictEqual(exposedSecrets.length, 0);
         });
     });
 

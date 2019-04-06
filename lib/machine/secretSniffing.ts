@@ -62,12 +62,14 @@ export async function sniffFileContent(repoRef: RepoRef, path: string, content: 
     const exposedSecrets: ExposedSecret[] = [];
     for (const pat of opts.secretDefinitions) {
         const matches = content.match(pat.pattern) || [];
-        matches.forEach(m => exposedSecrets.push(({
-            repoRef,
-            path,
-            description: pat.description,
-            secret: m,
-        })));
+        matches
+            .filter(m => !opts.whitelist.includes(m))
+            .forEach(m => exposedSecrets.push(({
+                repoRef,
+                path,
+                description: pat.description,
+                secret: m,
+            })));
     }
     return exposedSecrets;
 }
