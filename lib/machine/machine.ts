@@ -26,7 +26,7 @@ import {
     SoftwareDeliveryMachineConfiguration,
 } from "@atomist/sdm";
 import { createSoftwareDeliveryMachine, } from "@atomist/sdm-core";
-import { ExposedSecret, SecretDefinition, SnifferOptions, sniffProject } from "./secretSniffing";
+import { ExposedSecret, SnifferOptions, sniffProject } from "./secretSniffing";
 import { loadSnifferOptions } from "./snifferOptionsLoader";
 
 /**
@@ -81,14 +81,12 @@ async function renderExposedSecrets(exposedSecrets: ExposedSecret[], sdmc: SdmCo
  * On every push, scan for secrets
  * @return {PushImpactListener<{}>}
  */
-function sniffForSecrets(opts: SnifferOptions): PushImpactListener<{}> {
+function sniffForSecrets(opts: SnifferOptions): PushImpactListener {
     return async pil => {
         const exposedSecrets = await sniffProject(pil.project, opts);
         await renderExposedSecrets(exposedSecrets, pil);
-        return {
-            response: exposedSecrets.length > 0 ?
-                PushImpactResponse.failGoals :
-                PushImpactResponse.proceed
-        };
+        return exposedSecrets.length > 0 ?
+            PushImpactResponse.failGoals :
+            PushImpactResponse.proceed;
     };
 }
