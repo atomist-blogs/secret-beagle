@@ -47,7 +47,7 @@ export async function machine(
 
     // Goal to react to any push
     const pushImpact = new PushImpact()
-        .withListener(sniffForSecrets(snifferOptions));
+        .withListener(sniffForSecretsOnPush(snifferOptions));
 
     sdm.withPushRules(
         onAnyPush().itMeans("sniff for secrets").setGoals(pushImpact),
@@ -82,9 +82,11 @@ async function renderExposedSecrets(exposedSecrets: ExposedSecret[], sdmc: SdmCo
  * On every push, scan for secrets
  * @return {PushImpactListener<{}>}
  */
-function sniffForSecrets(opts: SnifferOptions): PushImpactListener {
+function sniffForSecretsOnPush(opts: SnifferOptions): PushImpactListener {
     return async pil => {
-        const sniffed = await sniffProject(pil.project, opts);
+        const sniffed = await sniffProject(
+            opts.scanOnlyChangedFiles ? pil.impactedSubProject : pil.project,
+            opts);
         await renderExposedSecrets(sniffed.exposedSecrets, pil);
         return sniffed.exposedSecrets.length > 0 ?
             PushImpactResponse.failGoals :

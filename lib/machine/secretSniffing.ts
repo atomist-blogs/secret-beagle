@@ -35,6 +35,8 @@ export interface SecretDefinition {
 
 export interface SnifferOptions {
 
+    scanOnlyChangedFiles: boolean;
+
     globs: string[];
 
     secretDefinitions: SecretDefinition[];

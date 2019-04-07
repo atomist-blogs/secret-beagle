@@ -28,6 +28,8 @@ look as follows:
 # List of glob patterns to match files
 globs:
   - "**"
+  
+scanOnlyChangedFiles: false
 
 secrets:
   # List of secrets, with regex and description
@@ -42,6 +44,8 @@ whitelist:
 Sections are as follows:
 - `globs`: List of glob strings specifying the type of files to look in. Default is all files.
 Binary files won't be examined in any case.
+
+- `scanOnlyChangedFiles`: Whether to scan only files changed in the commit.
 - `secrets`: List of `secret` structure. Consists of `pattern` (regular expression matching the secret
 in a file) and human readable `description` (typically what kind of secret this is)
 - `whitelist`: List of secret literals, if any, that _are_ acceptable in your project.

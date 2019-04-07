@@ -27,6 +27,7 @@ export async function loadSnifferOptions(): Promise<SnifferOptions> {
             secretDefinitions,
             whitelist: native.whitelist || [],
             globs: native.globs || [AllFiles],
+            scanOnlyChangedFiles: native.scanOnlyChangedFiles || false,
         };
     } catch (err) {
         throw new Error(`Unable to parse secrets.yml: ${err.message}`);
