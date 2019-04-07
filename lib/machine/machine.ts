@@ -58,11 +58,12 @@ export async function machine(
         intent: ["find secrets", "sniff secrets", "release the hound"],
         inspection: async (p, ci) => {
             await ci.addressChannels(`Sniffing project at ${p.id.url} for secrets`);
-            const exposedSecrets = await sniffProject(p, snifferOptions);
-            if (exposedSecrets.length === 0) {
+            const sniffed = await sniffProject(p, snifferOptions);
+            await ci.addressChannels(`Sniffed ${sniffed.filesSniffed} files in project at ${p.id.url} in ${sniffed.timeMillis} milliseconds`);
+            if (sniffed.exposedSecrets.length === 0) {
                 await ci.addressChannels(slackInfoMessage(p.id.url, "Everything is cool and secure :thumbsup:"));
             } else {
-                await renderExposedSecrets(exposedSecrets, ci);
+                await renderExposedSecrets(sniffed.exposedSecrets, ci);
             }
         },
     });
@@ -83,9 +84,9 @@ async function renderExposedSecrets(exposedSecrets: ExposedSecret[], sdmc: SdmCo
  */
 function sniffForSecrets(opts: SnifferOptions): PushImpactListener {
     return async pil => {
-        const exposedSecrets = await sniffProject(pil.project, opts);
-        await renderExposedSecrets(exposedSecrets, pil);
-        return exposedSecrets.length > 0 ?
+        const sniffed = await sniffProject(pil.project, opts);
+        await renderExposedSecrets(sniffed.exposedSecrets, pil);
+        return sniffed.exposedSecrets.length > 0 ?
             PushImpactResponse.failGoals :
             PushImpactResponse.proceed;
     };

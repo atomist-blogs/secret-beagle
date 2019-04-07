@@ -25,8 +25,8 @@ describe("secret sniffing", () => {
 
         it("finds not secrets in empty project", async () => {
             const p = InMemoryProject.of();
-            const exposedSecrets = await sniffProject(p, await loadSnifferOptions());
-            assert.strictEqual(exposedSecrets.length, 0);
+            const sniffed = await sniffProject(p, await loadSnifferOptions());
+            assert.strictEqual(sniffed.exposedSecrets.length, 0);
         });
 
         it("doesn't object to innocent JS file in project", async () => {
@@ -34,8 +34,8 @@ describe("secret sniffing", () => {
                 path: "evil.js",
                 content: "const myString = 'kinder than the Dalai Lama'",
             });
-            const exposedSecrets = await sniffProject(p, await loadSnifferOptions());
-            assert.strictEqual(exposedSecrets.length, 0);
+            const sniffed = await sniffProject(p, await loadSnifferOptions());
+            assert.strictEqual(sniffed.exposedSecrets.length, 0);
         });
 
         it("finds leaky JS file in project", async () => {
@@ -43,12 +43,12 @@ describe("secret sniffing", () => {
                 path: "evil.js",
                 content: "const awsLeak = 'AKIAIMW6ASF43DFX57X9'",
             });
-            const exposedSecrets = await sniffProject(p,
+            const sniffed = await sniffProject(p,
                 await loadSnifferOptions());
-            assert.strictEqual(exposedSecrets.length, 1);
-            assert.strictEqual(exposedSecrets[0].path, "evil.js");
-            assert.strictEqual(exposedSecrets[0].secret, "AKIAIMW6ASF43DFX57X9");
-            assert.deepStrictEqual(exposedSecrets[0].repoRef, p.id);
+            assert.strictEqual(sniffed.exposedSecrets.length, 1);
+            assert.strictEqual(sniffed.exposedSecrets[0].path, "evil.js");
+            assert.strictEqual(sniffed.exposedSecrets[0].secret, "AKIAIMW6ASF43DFX57X9");
+            assert.deepStrictEqual(sniffed.exposedSecrets[0].repoRef, p.id);
         });
 
     });

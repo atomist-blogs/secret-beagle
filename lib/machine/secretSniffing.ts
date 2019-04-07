@@ -46,16 +46,35 @@ export interface SnifferOptions {
 }
 
 /**
+ * Result of sniffing
+ */
+export interface SniffResult {
+    options: SnifferOptions;
+    exposedSecrets: ExposedSecret[];
+    filesSniffed: number;
+    timeMillis: number;
+}
+
+/**
  * Sniff this project for exposed secrets.
  * Open every file.
  */
-export async function sniffProject(project: Project, opts: SnifferOptions): Promise<ExposedSecret[]> {
-    return _.flatten(await projectUtils.gatherFromFiles(project, opts.globs, async f => {
+export async function sniffProject(project: Project, options: SnifferOptions): Promise<SniffResult> {
+    let filesSniffed = 0;
+    const startTime = new Date().getTime();
+    const exposedSecrets = _.flatten(await projectUtils.gatherFromFiles(project, options.globs, async f => {
         if (await f.isBinary()) {
             return undefined;
         }
-        return sniffFileContent(project.id, f.path, await f.getContent(), opts);
+        ++filesSniffed;
+        return sniffFileContent(project.id, f.path, await f.getContent(), options);
     }));
+    return {
+        options,
+        filesSniffed,
+        exposedSecrets,
+        timeMillis: new Date().getTime() - startTime,
+    };
 }
 
 export async function sniffFileContent(repoRef: RepoRef, path: string, content: string, opts: SnifferOptions): Promise<ExposedSecret[]> {
