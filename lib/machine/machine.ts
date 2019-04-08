@@ -72,7 +72,7 @@ export async function machine(
 
 async function renderExposedSecrets(exposedSecrets: ExposedSecret[], sdmc: SdmContext) {
     for (const es of exposedSecrets) {
-        await sdmc.addressChannels(slackWarningMessage(es.repoRef.url,
+        await sdmc.addressChannels(slackWarningMessage(es.repoRef.url + " sha:" + es.repoRef.sha,
             `Exposed secret: ${es.description} in \`${es.path}\``,
             sdmc.context));
     }
