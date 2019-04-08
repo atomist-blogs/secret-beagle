@@ -45,10 +45,12 @@ export async function machine(
     const snifferOptions = await loadSnifferOptions();
 
     // Rules for handling pushes across this organization...
+
     sdm.withPushRules(
         onAnyPush()
             .itMeans("sniff for secrets")
-            .setGoals(new PushImpact().withListener(sniffForSecretsOnPush(snifferOptions))),
+            .setGoals(new PushImpact()
+                .withListener(sniffForSecretsOnPush(snifferOptions))),
     );
 
     sdm.addCodeInspectionCommand({
