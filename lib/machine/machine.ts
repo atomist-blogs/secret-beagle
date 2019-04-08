@@ -18,7 +18,6 @@ import {
     onAnyPush,
     PushImpact,
     PushImpactListener,
-    PushImpactResponse,
     SdmContext,
     slackInfoMessage,
     slackWarningMessage,
@@ -88,8 +87,5 @@ function sniffForSecretsOnPush(opts: SnifferOptions): PushImpactListener {
             opts.scanOnlyChangedFiles ? pil.impactedSubProject : pil.project,
             opts);
         await renderExposedSecrets(sniffed.exposedSecrets, pil);
-        return sniffed.exposedSecrets.length > 0 ?
-            PushImpactResponse.failGoals :
-            PushImpactResponse.proceed;
     };
 }

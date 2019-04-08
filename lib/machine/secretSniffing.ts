@@ -81,14 +81,14 @@ export async function sniffProject(project: Project, options: SnifferOptions): P
 
 export async function sniffFileContent(repoRef: RepoRef, path: string, content: string, opts: SnifferOptions): Promise<ExposedSecret[]> {
     const exposedSecrets: ExposedSecret[] = [];
-    for (const pat of opts.secretDefinitions) {
-        const matches = content.match(pat.pattern) || [];
+    for (const sd of opts.secretDefinitions) {
+        const matches = content.match(sd.pattern) || [];
         matches
             .filter(m => !opts.whitelist.includes(m))
             .forEach(m => exposedSecrets.push(({
                 repoRef,
                 path,
-                description: pat.description,
+                description: sd.description,
                 secret: m,
             })));
     }
