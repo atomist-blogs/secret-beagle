@@ -20,7 +20,8 @@ to ensure you have the necessary git hooks.
 
 ## Configuration
 
-The definition of secrets is is in the `secrets.yml` file in the root directory. It should
+The definition of secrets is in the [`secrets.yml`](secrets.yml) file in the root directory. It 
+covers more than a dozen common token types that you may want to scan for. It should
 look as follows:
 
 ```yaml
